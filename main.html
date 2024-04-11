@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Youtube to MP3</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Youtube to MP3</h1>
+        <form id="convertForm">
+            <label for="videoUrl">Video URL:</label>
+            <input type="text" id="videoUrl" name="videoUrl" required>
+            <input type="submit" value="Convert to MP3">
+        </form>
+    </div>
+
+    <script>
+        document.getElementById('convertForm').addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent form submission
+
+            const videoUrl = document.getElementById('videoUrl').value;
+            const url = `/convert?url=${encodeURIComponent(videoUrl)}`;
+
+            // Create a hidden link and trigger the download
+            const link = document.createElement('a');
+            link.href = url;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Login</h1>
+        <form id="loginForm">
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <input type="submit" value="Login">
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.8/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.8/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBtdHOy5dVSddCRdz_mQmGgsMV2gLSsuAA",
+            authDomain: "chakra-reservation.firebaseapp.com",
+            databaseURL: "https://chakra-reservation.firebaseio.com",
+            projectId: "chakra-reservation",
+            storageBucket: "chakra-reservation.appspot.com",
+            messagingSenderId: "830300281180",
+            appId: "1:830300281180:web:48de2d8bbcb161a5554999"
+        };
+
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        const loginForm = document.getElementById('loginForm');
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Prevent form submission
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const token = await userCredential.user.getIdToken();
+                fetch('/verifyToken', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ token })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.valid) {
+                            window.location.href = '/main';
+                        } else {
+                            console.error('Token invalid');
+                        }
+                    });
+            } catch (error) {
+                console.error('Sign-in error:', error);
+            }
+        });
+    </script>
+</body>
+
+</html>
