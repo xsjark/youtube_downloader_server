@@ -4,15 +4,18 @@ const cookieParser = require('cookie-parser');
 const ytdl = require('ytdl-core');
 const fs = require('fs');
 const path = require('path');
-const serviceAccount = require('./serviceAccountKey.json');
-const port = 8080
+// const serviceAccount = require('./serviceAccountKey.json');
+require('dotenv').config()
+
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
 ffmpeg.setFfmpegPath(ffmpegPath);
 const readline = require('readline');
 
+const port = 8080
+
 admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+    credential: admin.credential.cert(JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS))
 });
 
 const app = express();
