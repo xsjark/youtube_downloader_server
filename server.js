@@ -70,17 +70,6 @@ app.post('/logout', (req, res) => {
 
 app.get('/convert', async (req, res) => {
     try {
-        const sessionCookie = req.cookies.session || '';
-        if (!sessionCookie) {
-            return res.status(401).send('Unauthorized+ Unable to find session cookie.');
-        }
-
-        // Verify the session cookie using Firebase Admin SDK
-        const decodedClaims = await admin.auth().verifySessionCookie(sessionCookie, true);
-        // User is authenticated, proceed with the download
-        if (!decodedClaims) {
-            return res.status(401).send('Unauthorized: Unable to verify session cookie.');
-        }
         const videoUrl = req.query.url; // Use req.query to access query parameters
         const videoId = getYouTubeVideoId(videoUrl);
 
@@ -91,27 +80,22 @@ app.get('/convert', async (req, res) => {
         let start = Date.now();
         ffmpeg(stream)
             .audioBitrate(128)
-            .save(`${__dirname}/storage/${videoId}.mp3`)
-            .on('progress', p => {
-                readline.cursorTo(process.stdout, 0);
-                process.stdout.write(`${p.targetSize}kb downloaded`);
-            })
+            .format('mp3')
             .on('end', () => {
-                console.log(`\ndone, thanks - ${(Date.now() - start) / 1000}s`);
-                res.redirect(`/complete/${videoId}`)
+                console.log(`Conversion done, thanks - ${(Date.now() - start) / 1000}s`);
+            })
+            .pipe(res.attachment(`${videoId}.mp3`)) // Suggest filename for download
+            .on('finish', () => {
+                console.log('File sent to client');
             });
 
     } catch (error) {
-        if (error.code === 'auth/session-cookie-expired') {
-            return res.status(401).send('Session cookie expired');
-        }
         console.error('Error:', error);
         res.status(500).send('Internal Server Error');
     }
 });
 
 app.get('/complete/:id', (req, res) => {
-    const id = req.params.id;
     res.sendFile(__dirname + '/complete.html');
 })
 

@@ -9,48 +9,11 @@
 <body>
     <div class="container">
         <h1>Conversion complete!</h1>
-        <form id="downloadForm">
-            <input type="button" value="Download MP3" onclick="downloadMp3()">
+        <form id="completeForm">
+            <input type="button" value="Return" onclick="downloadMp3()">
             <a href="/main" class="button">Back</a>
         </form>
     </div>
-
-    <script>
-        function downloadMp3() {
-            const url = window.location.href;
-            const id = url.substring(url.lastIndexOf('/') + 1);
-
-            // Send a request to the /download route with the ID
-            fetch(`/download?url=${id}`, { method: 'GET' })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    // Redirect to the download URL
-                    window.location.href = response.url;
-
-                    // Call the /delete route after successful download
-                    window.onload = function() {
-                    // Call the /delete route after successful download
-                    fetch(`/delete?url=${id}`, { method: 'POST' })
-                        .then(deleteResponse => {
-                            if (!deleteResponse.ok) {
-                                throw new Error('Failed to delete file');
-                            }
-                            // Handle successful deletion (if needed)
-                            console.log('File deleted successfully');
-                        })
-                        .catch(deleteError => {
-                            console.error('Error deleting file:', deleteError);
-                            // Handle delete error
-                        });
-                };
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        }
-    </script>
 </body>
 
 </html>
