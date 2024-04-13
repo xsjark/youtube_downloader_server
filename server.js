@@ -62,6 +62,8 @@ app.post('/verifyToken', async (req, res) => {
         });
 });
 
+
+
 app.post('/logout', (req, res) => {
     res.clearCookie('session');
     res.redirect('/');
