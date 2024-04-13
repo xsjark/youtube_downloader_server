@@ -4,7 +4,6 @@ const cookieParser = require('cookie-parser');
 const ytdl = require('ytdl-core');
 const fs = require('fs');
 const path = require('path');
-// const serviceAccount = require('./serviceAccountKey.json');
 require('dotenv').config()
 
 const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
@@ -68,94 +67,41 @@ app.post('/logout', (req, res) => {
     res.redirect('/');
 });
 
+// Convert route with authentication check
 app.get('/convert', async (req, res) => {
-    try {
-        const videoUrl = req.query.url; // Use req.query to access query parameters
-        const videoId = getYouTubeVideoId(videoUrl);
+    const sessionCookie = req.cookies.session || '';
+    admin.auth().verifySessionCookie(sessionCookie, true)
+        .then(() => {
+            // User is authenticated, proceed with the conversion
+            try {
+                const videoUrl = req.query.url; // Use req.query to access query parameters
+                const videoId = getYouTubeVideoId(videoUrl);
 
-        let stream = ytdl(videoUrl, {
-            quality: 'highestaudio',
-        });
+                let stream = ytdl(videoUrl, {
+                    quality: 'highestaudio',
+                });
 
-        let start = Date.now();
-        ffmpeg(stream)
-            .audioBitrate(128)
-            .format('mp3')
-            .on('end', () => {
-                console.log(`Conversion done, thanks - ${(Date.now() - start) / 1000}s`);
-            })
-            .pipe(res.attachment(`${videoId}.mp3`)) // Suggest filename for download
-            .on('finish', () => {
-                console.log('File sent to client');
-            });
+                let start = Date.now();
+                ffmpeg(stream)
+                    .audioBitrate(128)
+                    .format('mp3')
+                    .on('end', () => {
+                        console.log(`Conversion done, thanks - ${(Date.now() - start) / 1000}s`);
+                    })
+                    .pipe(res.attachment(`${videoId}.mp3`)) // Suggest filename for download
+                    .on('finish', () => {
+                        console.log('File sent to client');
+                    });
 
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
-
-app.get('/complete/:id', (req, res) => {
-    res.sendFile(__dirname + '/complete.html');
-})
-
-app.get('/download', async (req, res) => {
-    const id = req.query.url;
-
-    // Assuming the file name in the storage folder is based on the id
-    const fileName = `${id}.mp3`;
-    const filePath = path.join(__dirname, 'storage', fileName);
-
-    // Check if the file exists
-    fs.access(filePath, fs.constants.F_OK, (err) => {
-        if (err) {
-            return res.status(404).send('File not found');
-        }
-
-        // If the file exists, initiate the download
-        res.download(filePath, fileName, (err) => {
-            if (err) {
-                console.error('Error downloading file:', err);
+            } catch (error) {
+                console.error('Error:', error);
                 res.status(500).send('Internal Server Error');
             }
+        })
+        .catch(() => {
+            // User is not authenticated, redirect to login page
+            res.redirect('/');
         });
-
-        // Delete the file after download completes
-        // res.on('finish', () => {
-        //     fs.unlink(filePath, (err) => {
-        //         if (err) {
-        //             console.error('Error deleting file:', err);
-        //         } else {
-        //             console.log('File deleted successfully');
-        //         }
-        //     });
-        // });
-    });
-});
-
-// Route for /delete
-app.post('/delete', async (req, res) => {
-    const id = req.query.url;
-    const fileName = `${id}.mp3`;
-    const filePath = path.join(__dirname, 'storage', fileName);
-
-    // Check if the file exists
-    fs.access(filePath, fs.constants.F_OK, (err) => {
-        if (err) {
-            return res.status(404).send('File not found');
-        }
-
-        // If the file exists, delete it
-        fs.unlink(filePath, (err) => {
-            if (err) {
-                console.error('Error deleting file:', err);
-                return res.status(500).send('Internal Server Error');
-            } else {
-                console.log('File deleted successfully');
-                return res.status(200).send('File deleted successfully');
-            }
-        });
-    });
 });
 
 app.listen(port, () => {
